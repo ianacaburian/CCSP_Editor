@@ -3,7 +3,8 @@
 <JUCERPROJECT id="MbXvWj" name="CCSP_Editor" projectType="guiapp" jucerVersion="5.3.2">
   <MAINGROUP id="xdPzsm" name="CCSP_Editor">
     <GROUP id="{76D72D1D-D321-6D6C-589E-CE6A56E8216C}" name="Source">
-      <FILE id="FoLFfV" name="GridMapper.h" compile="0" resource="0" file="Source/GridMapper.h"/>
+      <FILE id="jjFaCM" name="CrossTable.h" compile="0" resource="0" file="Source/CrossTable.h"/>
+      <FILE id="FoLFfV" name="Mapper.h" compile="0" resource="0" file="Source/Mapper.h"/>
       <FILE id="KAIsNV" name="SampleTable.h" compile="0" resource="0" file="Source/SampleTable.h"/>
       <FILE id="MFvrxf" name="Identifiers.h" compile="0" resource="0" file="Source/Identifiers.h"/>
       <FILE id="zSqvAR" name="Utilities.h" compile="0" resource="0" file="Source/Utilities.h"/>

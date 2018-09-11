@@ -23,10 +23,10 @@ void SampleBrowser::fileClicked(const File& f, const MouseEvent& e)
     {
         auto add_new_val_tree = [this](ValueTree& param_tree, const String& param_val_str)
         {
-            auto& param_val_tree = ValueTree{ ID::param_val };
+            auto& param_val_tree = ValueTree{ ID::Param_Val };
             param_tree.appendChild(param_val_tree, nullptr);
             param_val_tree.setProperty(ID::param_val_name, param_val_str, nullptr);
-            param_val_tree.setProperty(ID::param_val_no, param_tree.getNumChildren() - 1, nullptr);
+            param_val_tree.setProperty(ID::param_val_no, param_tree.getNumChildren(), nullptr);
         };
         auto& table_tree = ValueTree{ ID::Sample_Table };
         auto& column_list = ValueTree{ ID::Column_List };
@@ -70,7 +70,7 @@ void SampleBrowser::fileClicked(const File& f, const MouseEvent& e)
                     }
                     else
                     {
-                        param_tree = ValueTree{ ID::param };
+                        param_tree = ValueTree{ ID::Param };
                         param_list.appendChild(param_tree, nullptr);
                         param_tree.setProperty(ID::param_name, param_name_str, nullptr);
                         param_tree.setProperty(ID::param_no, param_list.getNumChildren(), nullptr);

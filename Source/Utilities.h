@@ -2,12 +2,9 @@
 namespace cc
 {
     // Global constants ===================================================================
-    enum class RecMode { overdub, step, off };
     static const char* const chromatic_scale[]{ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-    static const auto octave_for_middle_c = 3, steps_per_page = 32, num_notes = 12, chromatic_scale_size = 12,
-        mid_cell_no = num_notes / 2 - 1, num_CCs = 8, midi_channel = 1, infinity = 0xfffffff, //----- remove this and replace all "infinity" with 0xffffff
-        dev_seq_no = 4, max_note_no = 120;
-    static const int64 infinity64 = 0xfffffffffffffff;
+    static const auto octave_for_middle_c = 3, chromatic_scale_size = 12, num_grids = 2, num_cells = 8, num_boxes = num_grids * num_cells + num_grids;
+
     // Data structure utilities ===========================================================
     template<typename T>
     inline String print_array(const T& arr, const String& label)

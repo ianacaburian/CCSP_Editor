@@ -14,7 +14,8 @@
 
 #include "SampleBrowser.h"
 #include "SampleTable.h"
-#include "GridMapper.h"
+#include "CrossTable.h"
+#include "Mapper.h"
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all
@@ -36,7 +37,9 @@ private:
     ValueTree state;
     std::unique_ptr<SampleBrowser> sample_browser;
     std::unique_ptr<SampleTable> sample_table;
-    std::unique_ptr<GridMapper> grid_mapper;
+    std::unique_ptr<Mapper> mapper;
+    std::unique_ptr<CrossTable> cross_table;
+    TextButton xml;
 
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
