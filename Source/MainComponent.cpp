@@ -1,5 +1,5 @@
 #include "MainComponent.h"
-MainComponent::MainComponent() : xml{ "xml" }
+MainComponent::MainComponent() : state_str{ "state" }, xml { "xml" }
 {
     auto set_state = [this]()
     {
@@ -25,17 +25,15 @@ MainComponent::MainComponent() : xml{ "xml" }
         cross_table->set_state(state);
         mapper->set_state(state);
     };
-    xml.onClick = [this]()
-    {
-        DBG(state.toXmlString());
-    };
+    state_str.onClick = [this]() { DBG(state.toXmlString()); };
+    xml.onClick = [this]() { DBG(state.getChildWithName(ID::Fixed_Param_Vals).toXmlString()); };
     sample_browser = std::make_unique<SampleBrowser>(File{ "C:\\GitRepos\\CC_quencer\\Samples" });
     sample_table = std::make_unique<SampleTable>();
     key_table = std::make_unique<KeyTable>();
     cross_table = std::make_unique<CrossTable>();
     mapper = std::make_unique<Mapper>();
     cc::add_and_make_visible(*this, { sample_browser.get(), sample_table.get(), mapper.get(), 
-                                      key_table.get(), cross_table.get(), &xml });
+                                      key_table.get(), cross_table.get(), &state_str, &xml });
     set_state();
     setSize(1280, 720); setPaintingIsUnclipped(true); setOpaque(true);
 }
@@ -52,7 +50,8 @@ void MainComponent::resized()
     const auto h = b.getHeight();
 
     auto& left = b.removeFromLeft(w / 4);
-    xml.setBounds(left.removeFromBottom(100).toNearestIntEdges());
+    state_str.setBounds(left.removeFromBottom(20).toNearestIntEdges());
+    xml.setBounds(left.removeFromBottom(20).toNearestIntEdges());
     mapper->setBounds(left.removeFromBottom(h / 2).toNearestIntEdges());
     sample_browser->setBounds(left.toNearestIntEdges());
     sample_table->setBounds(b.removeFromTop(h / 2).toNearestIntEdges());

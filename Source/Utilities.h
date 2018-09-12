@@ -3,7 +3,9 @@ namespace cc
 {
     // Global constants ===================================================================
     static const char* const chromatic_scale[]{ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-    static const auto octave_for_middle_c = 3, chromatic_scale_size = 12, num_grids = 2, num_cells = 8, num_boxes = num_grids * num_cells + num_grids;
+    static const auto octave_for_middle_c = 3, chromatic_scale_size = 12, num_grids = 2, 
+                      num_cells = 8, num_boxes = num_grids * num_cells + num_grids,
+                      octal_size = 3;
 
     // Data structure utilities ===========================================================
     template<typename T>

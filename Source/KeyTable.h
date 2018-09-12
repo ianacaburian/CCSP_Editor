@@ -101,15 +101,13 @@ public:
 
     void valueTreeChildAdded(ValueTree&, ValueTree& c) override
     {
-        if (c.getType() == ID::Sample_Table) load_table(c);
+        if (c.getType() == ID::Key_Table) 
+            load_table(c);
     }
     void valueTreeChildRemoved(ValueTree&, ValueTree& c, int) override
     {
-        if (c.getType() == ID::Sample_Table) load_message();
-    }
-    void load_message()
-    {
-        DBG("Loading");
+        if (c.getType() == ID::Key_Table) 
+            DBG("Key_Table Removed");
     }
     void set_state(const ValueTree& state)
     {
@@ -118,26 +116,10 @@ public:
     }
     void load_table(ValueTree& table_tree)
     {
-        //auto t = table.getHeader().getNumColumns();
         table.getHeader().removeAllColumns();
         auto& column_list = table_tree.getChildWithName(ID::Column_List);
-        auto& note_tree = ValueTree{ ID::Column };
-        column_list.appendChild(note_tree, nullptr);
-        note_tree.setProperty(ID::column_name, "note", nullptr);
-        note_tree.setProperty(ID::column_id, column_list.getNumChildren(), nullptr);
-        auto& note_no_tree = ValueTree{ ID::Column };
-        column_list.appendChild(note_no_tree, nullptr);
-        note_no_tree.setProperty(ID::column_name, "note_no", nullptr);
-        const auto note_no_id = column_list.getNumChildren();
-        note_no_tree.setProperty(ID::column_id, note_no_id, nullptr);
-        auto& file_name_tree = ValueTree{ ID::Column };
-        column_list.appendChild(file_name_tree, nullptr);
-        file_name_tree.setProperty(ID::column_name, "file_name", nullptr);
-        const auto file_name_id = column_list.getNumChildren();
-        file_name_tree.setProperty(ID::column_id, file_name_id, nullptr);
-
         tutorialData.reset(table_tree.createXml());
-        dataList = tutorialData->getChildByName("Sample_List");
+        dataList = tutorialData->getChildByName("Key_List");
         columnList = tutorialData->getChildByName("Column_List");
         numRows = dataList->getNumChildElements();
         addAndMakeVisible(table);
@@ -148,8 +130,6 @@ public:
             table.getHeader().addColumn(columnXml->getStringAttribute("column_name"),
                 columnXml->getIntAttribute("column_id"), 30);
         table.autoSizeAllColumns();
-        table.getHeader().setColumnWidth(note_no_id, 50);
-        table.autoSizeColumn(file_name_id);
         table.getHeader().setSortColumnId(1, true);
         table.getHeader().setColumnVisible(8, false);
         table.setMultipleSelectionEnabled(true);

@@ -41,7 +41,7 @@ private:
     std::unique_ptr<Mapper> mapper;
     std::unique_ptr<KeyTable> key_table;
     std::unique_ptr<CrossTable> cross_table;
-    TextButton xml;
+    TextButton state_str, xml;
 
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)

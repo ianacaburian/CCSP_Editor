@@ -102,19 +102,39 @@ public:
     void valueTreeChildAdded(ValueTree&, ValueTree& c) override 
     {
         if (c.getType() == ID::Sample_Table) load_table(c);
+        else if (c.getType() == ID::Key_Table) update_table_keys(c);
     }
     void valueTreeChildRemoved(ValueTree&, ValueTree& c, int) override 
     {
-        if (c.getType() == ID::Sample_Table) load_message();
-    }
-    void load_message()
-    {
-        DBG("Loading");
+        if (c.getType() == ID::Sample_Table)
+            DBG("Sample_Table removed");
     }
     void set_state(const ValueTree& state)
     {
         this->state = state;
         this->state.addListener(this);
+    }
+    void update_table_keys(ValueTree& table_tree)
+    {
+        auto& sample_table = state.getChildWithName(ID::Sample_Table);
+        table.getHeader().removeAllColumns();
+        tutorialData.reset(sample_table.createXml());
+        dataList = tutorialData->getChildByName("Sample_List");
+        columnList = tutorialData->getChildByName("Column_List");
+        numRows = dataList->getNumChildElements();
+        if (getIndexOfChildComponent(&table) == -1)
+            addAndMakeVisible(table);
+        table.setColour(ListBox::outlineColourId, Colours::grey);
+        table.setOutlineThickness(1);
+        if (columnList != nullptr)
+            forEachXmlChildElement(*columnList, columnXml)
+            table.getHeader().addColumn(columnXml->getStringAttribute("column_name"),
+                columnXml->getIntAttribute("column_id"), 30);
+        table.autoSizeAllColumns();
+        table.getHeader().setSortColumnId(1, true);
+        table.getHeader().setColumnVisible(8, false);
+        table.setMultipleSelectionEnabled(true);
+
     }
     void load_table(ValueTree& table_tree)
     {
@@ -140,7 +160,8 @@ public:
         dataList = tutorialData->getChildByName("Sample_List");
         columnList = tutorialData->getChildByName("Column_List");
         numRows = dataList->getNumChildElements();
-        addAndMakeVisible(table);
+        if (getIndexOfChildComponent(&table) == -1)
+            addAndMakeVisible(table);
         table.setColour(ListBox::outlineColourId, Colours::grey);
         table.setOutlineThickness(1);
         if (columnList != nullptr)

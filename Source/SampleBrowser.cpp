@@ -82,6 +82,8 @@ void SampleBrowser::fileClicked(const File& f, const MouseEvent& e)
                         column_tree.setProperty(ID::column_id, column_list.getNumChildren(), nullptr);
                     }
                     sample_tree.setProperty(Identifier{ param_name_str }, param_val_str, nullptr);
+                    const auto param_val_no = param_tree.getChildWithProperty(ID::param_val_name, param_val_str)[ID::param_val_no];
+                    sample_tree.setProperty(Identifier{ param_name_str + "_val_no" }, param_val_no, nullptr);
                 }
             }
         }
