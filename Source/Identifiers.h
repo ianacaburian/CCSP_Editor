@@ -27,13 +27,23 @@ namespace ID
         //    DECLARE_ID(param_val_name)
         //    DECLARE_ID(param_val_no)
 
-    DECLARE_ID(Sample_Table)
-
+    DECLARE_ID(Key_Table)
+        
         DECLARE_ID(Column_List)
 
-            DECLARE_ID(column)
+            DECLARE_ID(Column)
                 DECLARE_ID(column_name)
                 DECLARE_ID(column_id)
+
+        DECLARE_ID(Key_List)
+
+    DECLARE_ID(Sample_Table)
+
+        //DECLARE_ID(Column_List)
+
+            //DECLARE_ID(Column)
+                //DECLARE_ID(column_name)
+                //DECLARE_ID(column_id)
 
         DECLARE_ID(Param_List)
 
@@ -47,7 +57,7 @@ namespace ID
 
         DECLARE_ID(Sample_List)
 
-            DECLARE_ID(sample)
+            DECLARE_ID(Sample)
                 DECLARE_ID(file_name)
                 DECLARE_ID(file_path)
                 DECLARE_ID(note)

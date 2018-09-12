@@ -1,8 +1,8 @@
 #pragma once
-class SampleTable : public Component, public TableListBoxModel, public cc::ValueTreePropertyAndChildChangeListener
+class KeyTable : public Component, public TableListBoxModel, public cc::ValueTreePropertyAndChildChangeListener
 {
 public:
-    SampleTable() 
+    KeyTable()
     {
     }
     int getNumRows() override
@@ -96,14 +96,14 @@ public:
 
         return widest + 8;
     }
-    
+
     void valueTreePropertyChanged(ValueTree& t, const Identifier& p) override {}
-   
-    void valueTreeChildAdded(ValueTree&, ValueTree& c) override 
+
+    void valueTreeChildAdded(ValueTree&, ValueTree& c) override
     {
         if (c.getType() == ID::Sample_Table) load_table(c);
     }
-    void valueTreeChildRemoved(ValueTree&, ValueTree& c, int) override 
+    void valueTreeChildRemoved(ValueTree&, ValueTree& c, int) override
     {
         if (c.getType() == ID::Sample_Table) load_message();
     }
@@ -145,8 +145,8 @@ public:
         table.setOutlineThickness(1);
         if (columnList != nullptr)
             forEachXmlChildElement(*columnList, columnXml)
-                table.getHeader().addColumn(columnXml->getStringAttribute("column_name"),
-                                            columnXml->getIntAttribute("column_id"), 30);        
+            table.getHeader().addColumn(columnXml->getStringAttribute("column_name"),
+                columnXml->getIntAttribute("column_id"), 30);
         table.autoSizeAllColumns();
         table.getHeader().setColumnWidth(note_no_id, 50);
         table.autoSizeColumn(file_name_id);
@@ -195,7 +195,7 @@ private:
     class EditableTextCustomComponent : public Label
     {
     public:
-        EditableTextCustomComponent(SampleTable& td)
+        EditableTextCustomComponent(KeyTable& td)
             : owner(td)
         {
             setEditable(false, true, false);
@@ -221,7 +221,7 @@ private:
         }
 
     private:
-        SampleTable& owner;
+        KeyTable& owner;
         int row, columnId;
         Colour textColour;
     };
@@ -230,7 +230,7 @@ private:
     class SelectionColumnCustomComponent : public Component
     {
     public:
-        SelectionColumnCustomComponent(SampleTable& td)
+        SelectionColumnCustomComponent(KeyTable& td)
             : owner(td)
         {
             addAndMakeVisible(toggleButton);
@@ -251,7 +251,7 @@ private:
         }
 
     private:
-        SampleTable& owner;
+        KeyTable& owner;
         ToggleButton toggleButton;
         int row, columnId;
     };
@@ -294,5 +294,5 @@ private:
         return {};
     }
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SampleTable)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(KeyTable)
 };

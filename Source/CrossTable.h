@@ -54,7 +54,7 @@ private:
     {
         auto update_grids_mapped = [this](const int mapped)
         {
-            grids_mapped += static_cast<bool>(mapped) ? 1 : -1;
+            grids_mapped += mapped ? 1 : -1;
             grids_mapped = jlimit(0, 2, grids_mapped);
             repaint();
         };
@@ -62,5 +62,5 @@ private:
     }
     ValueTree state, grid0_tree, grid1_tree;
     OwnedArray<OwnedArray<Rectangle<float>>> grid;
-    int grids_mapped;
+    int grids_mapped; //---- remove this and have cross table showing depend on add/remove key_list child
 };

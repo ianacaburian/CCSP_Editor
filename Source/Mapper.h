@@ -55,6 +55,8 @@ class GridMapper : public ComboBox, public cc::ValueTreePropertyAndChildChangeLi
             }
             if (other_grid.getSelectedItemIndex() == i)
                 other_grid.setSelectedItemIndex(-1);
+            if (other_grid.getSelectedId() && getSelectedId())
+                map_keys();
         };
     }
     void valueTreePropertyChanged(ValueTree& t, const Identifier& p) override

@@ -46,7 +46,7 @@ void SampleBrowser::fileClicked(const File& f, const MouseEvent& e)
                                                 .upToFirstOccurrenceOf(" ", false, true);
                 if (note_str.isEmpty())
                     continue;
-                auto& sample_tree = ValueTree{ ID::sample };
+                auto& sample_tree = ValueTree{ ID::Sample };
                 sample_list.appendChild(sample_tree, nullptr);
                 sample_tree.setProperty(ID::file_name, file_name, nullptr);
                 sample_tree.setProperty(ID::file_path, file.getFullPathName(), nullptr);
@@ -76,7 +76,7 @@ void SampleBrowser::fileClicked(const File& f, const MouseEvent& e)
                         param_tree.setProperty(ID::param_no, param_list.getNumChildren(), nullptr);
                         add_new_val_tree(param_tree, param_val_str);
 
-                        auto& column_tree = ValueTree{ ID::column };
+                        auto& column_tree = ValueTree{ ID::Column };
                         column_list.appendChild(column_tree, nullptr);
                         column_tree.setProperty(ID::column_name, param_name_str, nullptr);
                         column_tree.setProperty(ID::column_id, column_list.getNumChildren(), nullptr);

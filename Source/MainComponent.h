@@ -14,6 +14,7 @@
 
 #include "SampleBrowser.h"
 #include "SampleTable.h"
+#include "KeyTable.h"
 #include "CrossTable.h"
 #include "Mapper.h"
 //==============================================================================
@@ -38,6 +39,7 @@ private:
     std::unique_ptr<SampleBrowser> sample_browser;
     std::unique_ptr<SampleTable> sample_table;
     std::unique_ptr<Mapper> mapper;
+    std::unique_ptr<KeyTable> key_table;
     std::unique_ptr<CrossTable> cross_table;
     TextButton xml;
 

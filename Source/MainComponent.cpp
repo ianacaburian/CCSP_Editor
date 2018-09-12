@@ -21,6 +21,7 @@ MainComponent::MainComponent() : xml{ "xml" }
             create_default_state();
         sample_browser->set_state(state);
         sample_table->set_state(state);
+        key_table->set_state(state);
         cross_table->set_state(state);
         mapper->set_state(state);
     };
@@ -30,10 +31,11 @@ MainComponent::MainComponent() : xml{ "xml" }
     };
     sample_browser = std::make_unique<SampleBrowser>(File{ "C:\\GitRepos\\CC_quencer\\Samples" });
     sample_table = std::make_unique<SampleTable>();
+    key_table = std::make_unique<KeyTable>();
     cross_table = std::make_unique<CrossTable>();
     mapper = std::make_unique<Mapper>();
     cc::add_and_make_visible(*this, { sample_browser.get(), sample_table.get(), mapper.get(), 
-                                      cross_table.get(), &xml });
+                                      key_table.get(), cross_table.get(), &xml });
     set_state();
     setSize(1280, 720); setPaintingIsUnclipped(true); setOpaque(true);
 }
@@ -54,5 +56,6 @@ void MainComponent::resized()
     mapper->setBounds(left.removeFromBottom(h / 2).toNearestIntEdges());
     sample_browser->setBounds(left.toNearestIntEdges());
     sample_table->setBounds(b.removeFromTop(h / 2).toNearestIntEdges());
-    cross_table->setBounds(b.removeFromLeft(b.getHeight()).toNearestIntEdges());
+    cross_table->setBounds(b.removeFromRight(b.getHeight()).toNearestIntEdges());
+    key_table->setBounds(b.toNearestIntEdges());
 }
