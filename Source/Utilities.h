@@ -62,14 +62,12 @@ namespace cc
     {
         return lower <= value && value <= upper;
     }
-    inline int create_column_get_id(ValueTree& column_list, const String& name)
+    inline void create_column(ValueTree& column_list, const String& name)
     {
         auto& column_tree = ValueTree{ ID::Column };
         column_list.appendChild(column_tree, nullptr);
         column_tree.setProperty(ID::column_name, name, nullptr);
-        const auto column_id = column_list.getNumChildren();
-        column_tree.setProperty(ID::column_id, column_id, nullptr);
-        return column_id;
+        column_tree.setProperty(ID::column_id, column_list.getNumChildren(), nullptr);
     }
     inline ValueTree create_and_append(const Identifier& id, ValueTree& parent)
     {

@@ -3,31 +3,17 @@ namespace ID
 {
     #define DECLARE_ID(name) const Identifier name (#name);
 
-    // Document these ID's with expected data type and valid values.
     DECLARE_ID(STATE)
-    //DECLARE_ID(height)				// (int) //--------------tentative ids 
-    //DECLARE_ID(width)				// (int)
-    //DECLARE_ID(presets_folder)      // (String) file_name
-    //DECLARE_ID(sampler_polyphony)   // (int) 
-    //DECLARE_ID(sampler_preset)      // (String) file_name
-    //DECLARE_ID(samples_folder)      // (String) file_name
 
-    // IMPORTANT: These grid trees are called by index, meaning that there is a 
+    // IMPORTANT: Grid type trees are called by index, meaning that there is a 
     // heavy dependence on their position as the first two child trees under STATE!! 
-    DECLARE_ID(Grid)      // (String) file_name
+    DECLARE_ID(Grid)      
         DECLARE_ID(param_name)      // (String) file_name
         DECLARE_ID(param_no)      // (String) file_name
 
         DECLARE_ID(Param_Val)
             DECLARE_ID(param_val_name)
             DECLARE_ID(param_val_no)
-    
-    //DECLARE_ID(Grid)      // (String) file_name
-        //DECLARE_ID(param_name)      // (String) file_name reused
-
-        //DECLARE_ID(param_val)
-        //    DECLARE_ID(param_val_name)
-        //    DECLARE_ID(param_val_no)
 
     DECLARE_ID(Sample_Table)
 
@@ -40,7 +26,7 @@ namespace ID
         DECLARE_ID(Param_List)
 
             DECLARE_ID(Param)
-                //DECLARE_ID(param_name)    // reused
+                //DECLARE_ID(param_name)   
                 //DECLARE_ID(param_no)
 
                 //DECLARE_ID(param_val)
@@ -77,25 +63,6 @@ namespace ID
                 //DECLARE_ID(key_no)
                 DECLARE_ID(num_shared)
                 DECLARE_ID(notes)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            //DECLARE_ID(param_name)
-            //DECLARE_ID(param_val)
-
-            //    DECLARE_ID(param_file)
 
 // Non-state tree ID's
     #undef DECLARE_ID

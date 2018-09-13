@@ -1,9 +1,8 @@
 #pragma once
-class CrossTable : public Component, cc::ValueTreePropertyChangeListener
+class CrossTable : public Component, cc::ValueTreePropertyAndChildChangeListener
 {
 public:
     CrossTable()
-        : grids_mapped(0)
     {
     }
     void resized() override
@@ -24,7 +23,7 @@ public:
     }
     void paint(Graphics& g) override
     {
-        if (grids_mapped == 2)
+        if (key_table.isValid())
         {
             g.setColour(Colours::white);
             for (int x = 0; x != cc::num_cells + 1; ++x)
@@ -50,17 +49,14 @@ public:
         grid1_tree = state.getChild(1);
     }
 private:
-    void valueTreePropertyChanged(ValueTree& t, const Identifier& p) override
+    void valueTreePropertyChanged(ValueTree& t, const Identifier& p) override {}
+    void valueTreeChildAdded(ValueTree&, ValueTree& c) override { if (c.getType() == ID::Key_Table) update_key_table(true, c); }
+    void valueTreeChildRemoved(ValueTree&, ValueTree& c, int) override { if (c.getType() == ID::Key_Table) update_key_table(false, c); }
+    void update_key_table(const bool added, ValueTree& key_table)
     {
-        auto update_grids_mapped = [this](const int mapped)
-        {
-            grids_mapped += mapped ? 1 : -1;
-            grids_mapped = jlimit(0, 2, grids_mapped);
-            repaint();
-        };
-        if (t.getType() == ID::Grid && p == ID::param_no) update_grids_mapped(t[p]);
+        this->key_table = added ? key_table : ValueTree{};
+        repaint();
     }
-    ValueTree state, grid0_tree, grid1_tree;
-    OwnedArray<OwnedArray<Rectangle<float>>> grid;
-    int grids_mapped; //---- remove this and have cross table showing depend on add/remove key_list child
+    ValueTree state, key_table, grid0_tree, grid1_tree;
+    OwnedArray<OwnedArray<Rectangle<float>>> grid;    
 };

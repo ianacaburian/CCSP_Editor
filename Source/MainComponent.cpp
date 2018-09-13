@@ -30,7 +30,7 @@ MainComponent::MainComponent() : state_str{ "state" }, xml { "xml" }
     xml.onClick = [this]() { DBG(state.getChildWithName(ID::Fixed_Param_Vals).toXmlString()); };
     sample_browser = std::make_unique<SampleBrowser>(File{ "C:\\GitRepos\\CC_quencer\\Samples" });
     sample_table = std::make_unique<SampleTable>();
-    key_table = std::make_unique<KeyTable>();
+    key_table = std::make_unique<Table>(ID::Key_Table, "Key_List");
     cross_table = std::make_unique<CrossTable>();
     mapper = std::make_unique<Mapper>();
     cc::add_and_make_visible(*this, { sample_browser.get(), sample_table.get(), mapper.get(), 

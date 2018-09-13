@@ -2,7 +2,7 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "Utilities.h"
 #include "Identifiers.h"
-class Mapper : public Component
+class Mapper : public Component, public cc::ValueTreePropertyAndChildChangeListener
 {
 public:
     Mapper();
@@ -16,12 +16,11 @@ private:
     };
     struct AffixDialog : public DialogWindow
     {
-        AffixDialog(Mapper& m, const ValueTree& fixed_val_params);
+        AffixDialog(Mapper& m);
         void resized() override;
         Mapper& m;
         OwnedArray<Label> param_labels;
         OwnedArray<ComboBox> param_boxes;
-        ValueTree fixed_val_params;
     };
     struct GenKeysButton : public TextButton
     {
@@ -32,19 +31,20 @@ private:
     {
         CellMapper(OwnedArray<CellMapper>& cells);
         ValueTree param_val_tree;
-        OwnedArray<CellMapper>& cells;
     };
-    struct GridMapper : public ComboBox, public cc::ValueTreePropertyAndChildChangeListener
+    struct GridMapper : public ComboBox
     {
-        GridMapper(OwnedArray<CellMapper>& cells, GridMapper& other_grid);
-        void valueTreePropertyChanged(ValueTree& t, const Identifier& p) override;
-        void valueTreeChildAdded(ValueTree&, ValueTree& c) override;
-        void valueTreeChildRemoved(ValueTree&, ValueTree& c, int) override;
-        OwnedArray<CellMapper>& cells;
-        ValueTree state, param_list, grid_tree;
-        SortedSet<int> used_vals;
+        GridMapper(Mapper& m, OwnedArray<CellMapper>& cells, GridMapper& other_grid);
+        void update_grid_boxes();
+        Mapper& m;
+        ValueTree grid_tree;
     };
-    ValueTree state;
+    void valueTreePropertyChanged(ValueTree& t, const Identifier& p) override;
+    void valueTreeChildAdded(ValueTree&, ValueTree& c) override;
+    void valueTreeChildRemoved(ValueTree&, ValueTree& c, int) override;
+    void update_sample_table(const bool added, const ValueTree& sample_table);
+    void update_key_table(const bool added, const ValueTree& key_table);
+    ValueTree state, fixed_param_vals, sample_table, param_list, sample_list, key_table, key_list;
     GridMapper grid0, grid1;
     OwnedArray<CellMapper> grid0_cells, grid1_cells;
     GenKeysButton gen_key_button;
