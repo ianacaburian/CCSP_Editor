@@ -16,6 +16,7 @@ MainComponent::MainComponent() : state_str{ "state" }, xml { "xml" }
                     grid_tree.appendChild(param_val_tree, nullptr);
                 }
             }
+            state.appendChild(ValueTree{ ID::Fixed_Param_Vals }, nullptr);
         };
         if (!state.isValid())
             create_default_state();

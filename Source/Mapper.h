@@ -3,9 +3,15 @@
 #include "Utilities.h"
 #include "Identifiers.h"
 class Mapper;
-class GenKeyDialog : public DocumentWindow
+class AffixDialog : public DialogWindow
 {
-    GenKeyDialog();
+    AffixDialog(Mapper& m, const ValueTree& fixed_val_params);
+    void resized() override;
+    Mapper& m;
+    OwnedArray<Label> param_labels;
+    OwnedArray<ComboBox> param_boxes;
+    ValueTree fixed_val_params;
+    friend class Mapper;
 };
 class GenKeyButton : public TextButton
 {
@@ -44,5 +50,7 @@ private:
     GridMapper grid0, grid1;
     OwnedArray<CellMapper> grid0_cells, grid1_cells;
     GenKeyButton gen_key_button;
+    TextButton affix_button;
     friend class GenKeyButton;
+    friend class AffixDialog;
 };

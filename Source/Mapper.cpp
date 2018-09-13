@@ -1,8 +1,42 @@
 #include "Mapper.h"
-GenKeyDialog::GenKeyDialog()
-    : DocumentWindow("Affix parameter value...", Colours::black, TitleBarButtons::closeButton)
+AffixDialog::AffixDialog(Mapper& m, const ValueTree& fixed_val_params)
+    : DialogWindow("Affix unused params...", Colours::black, TitleBarButtons::closeButton), 
+    m(m), fixed_val_params(fixed_val_params)
 {
-
+    auto& param_list = m.state.getChildWithName(ID::Sample_Table).getChildWithName(ID::Param_List);
+    for (int i = 0; i != fixed_val_params.getNumProperties(); ++i)
+    {
+        const auto prop = fixed_val_params.getPropertyName(i);
+        const auto& name = prop.toString();
+        
+        auto* box = new ComboBox{};
+        for (auto& p : param_list)
+        {
+            if (prop == Identifier{ p[ID::param_name].toString() + "_val_no" })
+            {
+                for (auto& v : p)
+                    box->addItem(v[ID::param_val_name], v[ID::param_val_no]);
+                break;
+            }
+        }
+        box->onChange = [this, prop, box]
+        {
+            this->fixed_val_params.setProperty(prop, box->getSelectedId(), nullptr);
+        };
+        cc::add_and_make_visible(*this, { param_labels.add(new Label{ name, name }),
+                                          param_boxes.add(box) });
+    }
+}
+void AffixDialog::resized()
+{
+    auto& b = getLocalBounds().toFloat();
+    const auto h = b.getHeight() / cc::num_boxes;
+    for (int i = 0; i != param_labels.size(); ++i)
+    {
+        auto& p = b.removeFromBottom(h);
+        param_labels.getUnchecked(i)->setBounds(p.removeFromLeft(proportionOfWidth(0.5f)).toNearestIntEdges());
+        param_boxes.getUnchecked(i)->setBounds(p.toNearestIntEdges());
+    }
 }
 GenKeyButton::GenKeyButton(Mapper& m) : m(m), TextButton("Generate Key")
 {
@@ -10,7 +44,7 @@ GenKeyButton::GenKeyButton(Mapper& m) : m(m), TextButton("Generate Key")
     {
         this->m.state.removeChild(this->m.state.getChildWithName(ID::Key_Table), nullptr);
         auto& sample_table = this->m.state.getChildWithName(ID::Sample_Table);
-        auto& fixed_param_vals = this->m.state.getOrCreateChildWithName(ID::Fixed_Param_Vals, nullptr);
+        auto& fixed_param_vals = this->m.state.getChildWithName(ID::Fixed_Param_Vals);
         for (int i = 0; i != fixed_param_vals.getNumProperties(); ++i)
         {
             if (!static_cast<int>(fixed_param_vals[fixed_param_vals.getPropertyName(i)]))
@@ -166,13 +200,15 @@ GridMapper::GridMapper(OwnedArray<CellMapper>& cells, GridMapper& other_grid) : 
                     cell->setSelectedItemIndex(i);
             }
         }
+        auto& fixed_param_vals = state.getChildWithName(ID::Fixed_Param_Vals);
+        fixed_param_vals.removeAllProperties(nullptr);
         const auto other_grid_selection = other_grid.getSelectedItemIndex();
         if (other_grid_selection == selection)
+        {
             other_grid.setSelectedItemIndex(-1);
+        }
         else if (other_grid_selection != -1)
         {
-            auto& fixed_param_vals = state.getOrCreateChildWithName(ID::Fixed_Param_Vals, nullptr);
-            fixed_param_vals.removeAllProperties(nullptr);
             for (int i = 0; i != param_list.getNumChildren(); ++i)
                 if (i != selection && i != other_grid_selection)
                     fixed_param_vals.setProperty(
@@ -184,7 +220,6 @@ void GridMapper::valueTreePropertyChanged(ValueTree& t, const Identifier& p)
 {
     // react to other grid and other cells
     //DBG("t: " << t.getType().toString() << " p: " << p.toString());
-
 }
 void GridMapper::valueTreeChildAdded(ValueTree&, ValueTree& c) 
 {
@@ -204,19 +239,33 @@ void GridMapper::valueTreeChildRemoved(ValueTree&, ValueTree& c, int)
 {
     //if (c.getType() == ID::Sample_Table) ;
 }
-Mapper::Mapper() : grid0{ grid0_cells, grid1 }, grid1{ grid1_cells, grid0 }, gen_key_button(*this)
+Mapper::Mapper() 
+    : grid0{ grid0_cells, grid1 }, grid1{ grid1_cells, grid0 }, affix_button("Affix"), gen_key_button(*this)
 {
-    cc::add_and_make_visible(*this, { &grid0, &grid1, &gen_key_button });
+    cc::add_and_make_visible(*this, { &grid0, &grid1, &affix_button, &gen_key_button });
     for (int i = 0; i != cc::num_cells; ++i)
         cc::add_and_make_visible(*this, { grid1_cells.add(new CellMapper{ grid1_cells }),
                                           grid0_cells.add(new CellMapper{ grid0_cells }) });
-
+    affix_button.onClick = [this] 
+    { 
+        auto& fixed_param_vals = state.getChildWithName(ID::Fixed_Param_Vals);
+        if (fixed_param_vals.getNumProperties())
+        {
+            DialogWindow::LaunchOptions dialog;
+            dialog.content = OptionalScopedPointer<Component>{ new AffixDialog{ *this, fixed_param_vals }, true };
+            dialog.componentToCentreAround = this;
+            dialog.content->setBounds(getLocalBounds());
+            dialog.launchAsync();
+        }
+    };
 }
 void Mapper::resized()
 {
     auto& b = getLocalBounds().toFloat();
     const auto box_h = b.getHeight() / (cc::num_boxes + 1);
-    gen_key_button.setBounds(b.removeFromBottom(box_h).toNearestIntEdges());
+    auto& buttons = b.removeFromBottom(box_h);
+    affix_button.setBounds(buttons.removeFromLeft(proportionOfWidth(0.5f)).toNearestIntEdges());
+    gen_key_button.setBounds(buttons.toNearestIntEdges());
     auto set_bounds = [this, &b, &box_h](ComboBox& c) { c.setBounds(b.removeFromBottom(box_h).toNearestIntEdges()); };
     set_bounds(grid0);
     for (auto* const c : grid0_cells)
