@@ -51,27 +51,27 @@ public:
     Component* refreshComponentForCell(int rowNumber, int columnId, bool /*isRowSelected*/,
         Component* existingComponentToUpdate) override
     {
-        if (columnId == 9)
-        {
-            auto* selectionBox = static_cast<SelectionColumnCustomComponent*> (existingComponentToUpdate);
+        //if (columnId == 9)
+        //{
+        //    auto* selectionBox = static_cast<SelectionColumnCustomComponent*> (existingComponentToUpdate);
 
-            if (selectionBox == nullptr)
-                selectionBox = new SelectionColumnCustomComponent(*this);
+        //    if (selectionBox == nullptr)
+        //        selectionBox = new SelectionColumnCustomComponent(*this);
 
-            selectionBox->setRowAndColumn(rowNumber, columnId);
-            return selectionBox;
-        }
+        //    selectionBox->setRowAndColumn(rowNumber, columnId);
+        //    return selectionBox;
+        //}
 
-        if (columnId == 8)
-        {
-            auto* textLabel = static_cast<EditableTextCustomComponent*> (existingComponentToUpdate);
+        //if (columnId == 8)
+        //{
+        //    auto* textLabel = static_cast<EditableTextCustomComponent*> (existingComponentToUpdate);
 
-            if (textLabel == nullptr)
-                textLabel = new EditableTextCustomComponent(*this);
+        //    if (textLabel == nullptr)
+        //        textLabel = new EditableTextCustomComponent(*this);
 
-            textLabel->setRowAndColumn(rowNumber, columnId);
-            return textLabel;
-        }
+        //    textLabel->setRowAndColumn(rowNumber, columnId);
+        //    return textLabel;
+        //}
 
         jassert(existingComponentToUpdate == nullptr);
         return nullptr;
@@ -79,22 +79,12 @@ public:
 
     int getColumnAutoSizeWidth(int columnId) override
     {
-        if (columnId == 9)
-            return 50;
-
-        int widest = 32;
-
+        const auto col_name = getAttributeNameForColumnId(columnId);
+        auto widest = font.getStringWidth(col_name);
         for (auto i = getNumRows(); --i >= 0;)
-        {
             if (auto* rowElement = dataList->getChildElement(i))
-            {
-                auto text = rowElement->getStringAttribute(getAttributeNameForColumnId(columnId));
-
-                widest = jmax(widest, font.getStringWidth(text));
-            }
-        }
-
-        return widest + 8;
+                widest = jmax(widest, font.getStringWidth(rowElement->getStringAttribute(col_name)));
+        return widest + 24;
     }
     
     void valueTreePropertyChanged(ValueTree& t, const Identifier& p) override {}
@@ -132,29 +122,20 @@ public:
                 columnXml->getIntAttribute("column_id"), 30);
         table.autoSizeAllColumns();
         table.getHeader().setSortColumnId(1, true);
-        table.getHeader().setColumnVisible(8, false);
         table.setMultipleSelectionEnabled(true);
-
     }
     void load_table(ValueTree& table_tree)
     {
         //auto t = table.getHeader().getNumColumns();
         table.getHeader().removeAllColumns();
         auto& column_list = table_tree.getChildWithName(ID::Column_List);
-        auto& note_tree = ValueTree{ ID::Column };
-        column_list.appendChild(note_tree, nullptr);
-        note_tree.setProperty(ID::column_name, "note", nullptr);
-        note_tree.setProperty(ID::column_id, column_list.getNumChildren(), nullptr);
-        auto& note_no_tree = ValueTree{ ID::Column };
-        column_list.appendChild(note_no_tree, nullptr);
-        note_no_tree.setProperty(ID::column_name, "note_no", nullptr);
-        const auto note_no_id = column_list.getNumChildren();
-        note_no_tree.setProperty(ID::column_id, note_no_id, nullptr);
-        auto& file_name_tree = ValueTree{ ID::Column };
-        column_list.appendChild(file_name_tree, nullptr);
-        file_name_tree.setProperty(ID::column_name, "file_name", nullptr);
-        const auto file_name_id = column_list.getNumChildren();
-        file_name_tree.setProperty(ID::column_id, file_name_id, nullptr);
+        cc::create_column_get_id(column_list, "key_no");
+        cc::create_column_get_id(column_list, "root_note");
+        const auto note_no_id = cc::create_column_get_id(column_list, "root_note_no");
+        cc::create_column_get_id(column_list, "duplicate_of");
+        cc::create_column_get_id(column_list, "low_note_no");
+        cc::create_column_get_id(column_list, "note_range");
+        const auto file_name_id = cc::create_column_get_id(column_list, "file_name");
 
         tutorialData.reset(table_tree.createXml());
         dataList = tutorialData->getChildByName("Sample_List");
@@ -172,7 +153,6 @@ public:
         table.getHeader().setColumnWidth(note_no_id, 50);
         table.autoSizeColumn(file_name_id);
         table.getHeader().setSortColumnId(1, true);
-        table.getHeader().setColumnVisible(8, false);
         table.setMultipleSelectionEnabled(true);
     }
     int getSelection(const int rowNumber) const

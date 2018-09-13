@@ -1,5 +1,42 @@
 #include "Mapper.h"
-AffixDialog::AffixDialog(Mapper& m, const ValueTree& fixed_val_params)
+Mapper::CreateButton::CreateButton(Mapper& m) : m{ m }, TextButton{ "Create Preset" }
+{
+    onClick = [this]
+    {
+        if (!this->m.state.getChildWithName(ID::Key_Table).isValid())
+        {
+            DBG("Key has not been generated.");
+            return;
+        }
+        const auto num_duplicates = static_cast<int>(this->m.state[ID::num_duplicates]);
+        if (num_duplicates)
+        {
+            DBG(num_duplicates << " duplicates exist, cannot create preset.");
+            return;
+        }
+        auto& save_tree = ValueTree{ ID::Sample_Table };
+        save_tree.appendChild(this->m.state.getChild(0).createCopy(), nullptr); // grid0 tree
+        save_tree.appendChild(this->m.state.getChild(1).createCopy(), nullptr); // grid1 tree
+        auto& sample_list = this->m.state.getChildWithName(ID::Sample_Table).getChildWithName(ID::Sample_List);
+        auto& save_sample_list = cc::create_and_append(ID::Sample_List, save_tree);
+        for (auto& s : sample_list)
+            if (s[ID::note_range].isInt()) // if a note range has been set, it's a valid sample.
+                save_sample_list.appendChild(s.createCopy(), nullptr);
+        auto& save_folder = File{ "C:\\GitRepos\\CC_quencer\\Samples" }; // user chooses along with new_file name
+        auto& new_file = File{ save_folder.addTrailingSeparator(save_folder.getFullPathName()) + "test" + ".ccsp" };
+        if (new_file.existsAsFile())
+        {
+            DBG("Overwriting file...");
+            new_file.deleteFile();
+        }
+        new_file.create();
+        std::unique_ptr<XmlElement> xml_state(save_tree.createXml());
+        xml_state->writeToFile(new_file, "");        
+        DBG("New file created: " << new_file.getFullPathName() << 
+            " samples_folder: " << sample_list[ID::samples_folder].toString());
+    };
+}
+Mapper::AffixDialog::AffixDialog(Mapper& m, const ValueTree& fixed_val_params)
     : DialogWindow("Affix unused params...", Colours::black, TitleBarButtons::closeButton), 
     m(m), fixed_val_params(fixed_val_params)
 {
@@ -27,7 +64,7 @@ AffixDialog::AffixDialog(Mapper& m, const ValueTree& fixed_val_params)
                                           param_boxes.add(box) });
     }
 }
-void AffixDialog::resized()
+void Mapper::AffixDialog::resized()
 {
     auto& b = getLocalBounds().toFloat();
     const auto h = b.getHeight() / cc::num_boxes;
@@ -38,123 +75,151 @@ void AffixDialog::resized()
         param_boxes.getUnchecked(i)->setBounds(p.toNearestIntEdges());
     }
 }
-GenKeyButton::GenKeyButton(Mapper& m) : m(m), TextButton("Generate Key")
+Mapper::GenKeysButton::GenKeysButton(Mapper& m) : m(m), TextButton("Generate Keys")
 {
     onClick = [this]
     {
-        this->m.state.removeChild(this->m.state.getChildWithName(ID::Key_Table), nullptr);
-        auto& sample_table = this->m.state.getChildWithName(ID::Sample_Table);
-        auto& fixed_param_vals = this->m.state.getChildWithName(ID::Fixed_Param_Vals);
-        for (int i = 0; i != fixed_param_vals.getNumProperties(); ++i)
+        auto params_unfixed = [this](const ValueTree& fixed_param_vals)->const bool
         {
-            if (!static_cast<int>(fixed_param_vals[fixed_param_vals.getPropertyName(i)]))
+            for (int i = 0; i != fixed_param_vals.getNumProperties(); ++i)
             {
-                DBG("Please affix all unused params before generating key.");
-                return;
+                if (!static_cast<int>(fixed_param_vals[fixed_param_vals.getPropertyName(i)]))
+                {
+                    DBG("Please affix all unused params before generating key.");
+                    return true;
+                }
             }
-        }
-        auto& sample_column_list = sample_table.getChildWithName(ID::Column_List);
-        auto& key_col = ValueTree{ ID::Column };
-        sample_column_list.appendChild(key_col, nullptr);
-        key_col.setProperty(ID::column_name, "key_no", nullptr);
-        key_col.setProperty(ID::column_id, sample_column_list.getNumChildren(), nullptr);
-
-        auto& sample_list = sample_table.getChildWithName(ID::Sample_List);
-        for (auto& s : sample_list)
-            s.removeProperty(ID::key_no, nullptr);        
-        auto& key_table = ValueTree{ ID::Key_Table };        
-        auto& column_list = ValueTree{ ID::Column_List };
-        key_table.appendChild(column_list, nullptr);
-        auto& key_no_col = ValueTree{ ID::Column };
-        column_list.appendChild(key_no_col, nullptr);
-        key_no_col.setProperty(ID::column_name, "key_no", nullptr);
-        key_no_col.setProperty(ID::column_id, column_list.getNumChildren(), nullptr);
-        auto& num_files_col = ValueTree{ ID::Column };
-        column_list.appendChild(num_files_col, nullptr);
-        num_files_col.setProperty(ID::column_name, "num_files", nullptr);
-        num_files_col.setProperty(ID::column_id, column_list.getNumChildren(), nullptr);
-        auto& notes_col = ValueTree{ ID::Column };
-        column_list.appendChild(notes_col, nullptr);
-        notes_col.setProperty(ID::column_name, "notes", nullptr);
-        notes_col.setProperty(ID::column_id, column_list.getNumChildren(), nullptr);
-        auto& duplicates_exist_col = ValueTree{ ID::Column };
-        column_list.appendChild(duplicates_exist_col, nullptr);
-        duplicates_exist_col.setProperty(ID::column_name, "duplicates_exist", nullptr);
-        duplicates_exist_col.setProperty(ID::column_id, column_list.getNumChildren(), nullptr);
-
-
-        auto& key_list = ValueTree{ ID::Key_List };
-        key_table.appendChild(key_list, nullptr);
-        auto& key_tree = ValueTree{ ID::Key_Tree };
-        key_table.appendChild(key_tree, nullptr);
-
+            return false;
+        };
+        auto reset_sample_list = [this]()->ValueTree
+        {
+            const ScopedLock sl(this->m.lock);
+            auto& sample_list = this->m.state.getChildWithName(ID::Sample_Table).getChildWithName(ID::Sample_List);
+            sample_list.setProperty(ID::num_duplicates, 0, nullptr);
+            for (auto& s : sample_list)
+            {
+                s.removeProperty(ID::key_no, nullptr);
+                s.removeProperty(ID::duplicate_of, nullptr);
+                s.removeProperty(ID::low_note_no, nullptr);
+                s.removeProperty(ID::note_range, nullptr);
+            }
+            return sample_list;
+        };
+        auto reset_key_table = [this]()->ValueTree
+        {
+            const ScopedLock sl(this->m.lock);
+            this->m.state.removeChild(this->m.state.getChildWithName(ID::Key_Table), nullptr);
+            auto& key_table = ValueTree{ ID::Key_Table };
+            auto& key_column_list = ValueTree{ ID::Column_List };
+            key_table.appendChild(key_column_list, nullptr);
+            cc::create_column_get_id(key_column_list, "key_no");
+            cc::create_column_get_id(key_column_list, "num_shared");
+            cc::create_column_get_id(key_column_list, "notes");
+            cc::create_column_get_id(key_column_list, "duplicates_exist");
+            return key_table;
+        };
+        auto fixed_params_match = [this](const ValueTree& fixed_param_vals, const ValueTree& sample)->bool
+        {
+            for (int i = 0; i != fixed_param_vals.getNumProperties(); ++i)
+            {
+                auto& fixed_param = fixed_param_vals.getPropertyName(i);
+                if (static_cast<int>(sample[fixed_param]) != static_cast<int>(fixed_param_vals[fixed_param]))
+                    return false;
+            }
+            return true;
+        };
+        auto analyze_notes = [this](ValueTree& sample_list, ValueTree& sample, Array<std::pair<int, ValueTree>>& note_nos, String& notes_str)
+        {
+            notes_str += sample[ID::root_note_no].toString() + ", ";
+            const auto sample_note_no = static_cast<int>(sample[ID::root_note_no]);
+            for (int k = 0, last_k = note_nos.size() - 1; k != note_nos.size(); ++k)
+            {
+                auto& other_note_no = note_nos.getUnchecked(k);
+                if (sample == other_note_no.second)
+                    continue;
+                else if (sample_note_no < other_note_no.first)
+                {
+                    note_nos.insert(k, { sample_note_no, sample });
+                    break;
+                }
+                else if (sample_note_no == other_note_no.first)
+                {
+                    sample.setProperty(ID::duplicate_of, other_note_no.second[ID::file_name], nullptr);
+                    const auto increment = static_cast<int>(sample_list[ID::num_duplicates]) + 1;
+                    sample_list.setProperty(ID::num_duplicates, increment, nullptr);
+                    break;
+                }
+                else if (k == last_k)
+                    note_nos.add({ sample_note_no, sample });
+            }
+            if (note_nos.isEmpty())
+                note_nos.add({ sample_note_no, sample });
+        };
+        auto set_note_ranges = [this](Array<std::pair<int, ValueTree>>& note_nos)
+        {
+            for (int k = 0, low_note_no = 0, last_k = note_nos.size() - 1; k != note_nos.size(); ++k)
+            {   // calculate note ranges
+                auto& note_no = note_nos.getUnchecked(k);
+                note_no.second.setProperty(ID::low_note_no, low_note_no, nullptr);
+                const auto high_note_no = k == last_k ? cc::highest_note_no : note_no.first + 1;
+                note_no.second.setProperty(ID::note_range, high_note_no - low_note_no, nullptr);
+                low_note_no = high_note_no;
+            }
+        };
+        auto add_key_list_entry = [this](ValueTree& key_list, const int key_no, const int num_shared, const String& notes_str)
+        {
+            auto& list_key = cc::create_and_append(ID::Key, key_list);
+            list_key.setProperty(ID::key_no, key_no, nullptr);
+            list_key.setProperty(ID::num_shared, num_shared, nullptr);
+            list_key.setProperty(ID::notes, notes_str.trimCharactersAtEnd(", "), nullptr);
+            DBG("Key " << key_no << " done...");
+        };
+        auto& fixed_param_vals = this->m.state.getChildWithName(ID::Fixed_Param_Vals);
+        if (params_unfixed(fixed_param_vals))
+            return;
+        auto& sample_list = reset_sample_list();
+        auto& key_table = reset_key_table();
+        auto& key_list = cc::create_and_append(ID::Key_List, key_table);
         auto& grid_tree0 = this->m.state.getChild(0);
         auto& grid_tree1 = this->m.state.getChild(1);
-        const auto param_no0 = static_cast<int>(grid_tree0[ID::param_no]);
-        const auto param_no1 = static_cast<int>(grid_tree1[ID::param_no]);
         auto& param_val_no_id0 = Identifier{ grid_tree0[ID::param_name].toString() + "_val_no" };
         auto& param_val_no_id1 = Identifier{ grid_tree1[ID::param_name].toString() + "_val_no" };
-        for (int i = 0; i != cc::num_cells; ++i)
+        for (int p0 = 0; p0 != cc::num_cells; ++p0)
         {
-            auto& param_val_tree0 = grid_tree0.getChild(i);
+            auto& param_val_tree0 = grid_tree0.getChild(p0);
             const auto param_val_no0 = static_cast<int>(param_val_tree0[ID::param_val_no]);
             if (!param_val_no0)
                 continue;
-            for (int j = 0; j != cc::num_cells; ++j)
+            for (int p1 = 0; p1 != cc::num_cells; ++p1)
             {
-                auto& param_val_tree1 = grid_tree1.getChild(j);
+                auto& param_val_tree1 = grid_tree1.getChild(p1);
                 const auto param_val_no1 = static_cast<int>(param_val_tree1[ID::param_val_no]);
                 if (!param_val_no1) 
                     continue;
-                auto& list_key = ValueTree{ ID::Key };
-                key_list.appendChild(list_key, nullptr);
-                auto& tree_key = ValueTree{ ID::Key };
-                key_tree.appendChild(tree_key, nullptr);
-
-                const auto key_no = (j << cc::octal_size) | i;
-                list_key.setProperty(ID::key_no, key_no, nullptr);
-                tree_key.setProperty(ID::key_no, key_no, nullptr);
-
+                const auto key_no = (p1 << cc::octal_size) | p0;
                 auto notes_str{ String{} };
-                auto duplicates_exist = 0;
-                Array<var> note_nos;
+                auto num_shared = 0;
+                Array<std::pair<int, ValueTree>> note_nos;
                 for (auto& s : sample_list)
                 {
-                    auto is_unmatched = false;
-                    for (int i = 0; i != fixed_param_vals.getNumProperties(); ++i)
-                    {
-                        auto& fixed_param = fixed_param_vals.getPropertyName(i);
-                        if (static_cast<int>(s[fixed_param]) != static_cast<int>(fixed_param_vals[fixed_param]))
-                        {
-                            is_unmatched = true;
-                            break;
-                        }
-                    }
-                    if (is_unmatched)
+                    if (!fixed_params_match(fixed_param_vals, s))
                         continue;
                     if (param_val_no0 == static_cast<int>(s[param_val_no_id0])
                         && param_val_no1 == static_cast<int>(s[param_val_no_id1]))
-                    {
+                    {   // if the sample corresponds to the mapped params
                         s.setProperty(ID::key_no, key_no, nullptr);
-                        tree_key.appendChild(s.createCopy(), nullptr);
-                        if (note_nos.contains(s[ID::note_no]))
-                            duplicates_exist = 1;
-                        else
-                            note_nos.add(s[ID::note_no]);
-                        notes_str += s[ID::note_no].toString() + ", ";
+                        ++num_shared;
+                        analyze_notes(sample_list, s, note_nos, notes_str);
                     }
                 }
-                list_key.setProperty(ID::num_files, tree_key.getNumChildren(), nullptr);
-                list_key.setProperty(ID::notes, notes_str.trimCharactersAtEnd(", "), nullptr);
-                list_key.setProperty(ID::duplicates_exist, duplicates_exist, nullptr);
-
-                DBG("Param0_val" << i << " and Param1_val" << j << " done...");
+                set_note_ranges(note_nos);
+                add_key_list_entry(key_list, key_no, num_shared, notes_str);
             }
         }
         this->m.state.appendChild(key_table, nullptr);
     };
 }
-CellMapper::CellMapper(OwnedArray<CellMapper>& cells) : cells(cells)
+Mapper::CellMapper::CellMapper(OwnedArray<CellMapper>& cells) : cells(cells)
 {
     setTextWhenNoChoicesAvailable("No values available...");
     setTextWhenNothingSelected("Unused value");
@@ -173,7 +238,7 @@ CellMapper::CellMapper(OwnedArray<CellMapper>& cells) : cells(cells)
         param_val_tree.setProperty(ID::param_val_no, getItemId(i), nullptr);
     };
 }
-GridMapper::GridMapper(OwnedArray<CellMapper>& cells, GridMapper& other_grid) : cells(cells)
+Mapper::GridMapper::GridMapper(OwnedArray<CellMapper>& cells, GridMapper& other_grid) : cells(cells)
 {
     setTextWhenNoChoicesAvailable("No params available...");
     setTextWhenNothingSelected(getTextWhenNoChoicesAvailable());
@@ -216,12 +281,12 @@ GridMapper::GridMapper(OwnedArray<CellMapper>& cells, GridMapper& other_grid) : 
         }
     };
 }
-void GridMapper::valueTreePropertyChanged(ValueTree& t, const Identifier& p) 
+void Mapper::GridMapper::valueTreePropertyChanged(ValueTree& t, const Identifier& p) 
 {
     // react to other grid and other cells
     //DBG("t: " << t.getType().toString() << " p: " << p.toString());
 }
-void GridMapper::valueTreeChildAdded(ValueTree&, ValueTree& c) 
+void Mapper::GridMapper::valueTreeChildAdded(ValueTree&, ValueTree& c) 
 {
     auto load_grid_boxes = [this](const ValueTree& table_tree)
     {
@@ -235,14 +300,14 @@ void GridMapper::valueTreeChildAdded(ValueTree&, ValueTree& c)
     if (c.getType() == ID::Sample_Table)
         load_grid_boxes(c);
 }
-void GridMapper::valueTreeChildRemoved(ValueTree&, ValueTree& c, int)
+void Mapper::GridMapper::valueTreeChildRemoved(ValueTree&, ValueTree& c, int)
 {
     //if (c.getType() == ID::Sample_Table) ;
 }
 Mapper::Mapper() 
-    : grid0{ grid0_cells, grid1 }, grid1{ grid1_cells, grid0 }, affix_button("Affix"), gen_key_button(*this)
+    : grid0{ grid0_cells, grid1 }, grid1{ grid1_cells, grid0 }, affix_button("Affix"), gen_key_button(*this), create_button(*this)
 {
-    cc::add_and_make_visible(*this, { &grid0, &grid1, &affix_button, &gen_key_button });
+    cc::add_and_make_visible(*this, { &grid0, &grid1, &affix_button, &gen_key_button, &create_button });
     for (int i = 0; i != cc::num_cells; ++i)
         cc::add_and_make_visible(*this, { grid1_cells.add(new CellMapper{ grid1_cells }),
                                           grid0_cells.add(new CellMapper{ grid0_cells }) });
@@ -264,15 +329,17 @@ void Mapper::resized()
     auto& b = getLocalBounds().toFloat();
     const auto box_h = b.getHeight() / (cc::num_boxes + 1);
     auto& buttons = b.removeFromBottom(box_h);
-    affix_button.setBounds(buttons.removeFromLeft(proportionOfWidth(0.5f)).toNearestIntEdges());
-    gen_key_button.setBounds(buttons.toNearestIntEdges());
-    auto set_bounds = [this, &b, &box_h](ComboBox& c) { c.setBounds(b.removeFromBottom(box_h).toNearestIntEdges()); };
-    set_bounds(grid0);
+    const auto button_w = proportionOfWidth(1.f / 3);
+    affix_button.setBounds(buttons.removeFromLeft(button_w).toNearestIntEdges());
+    gen_key_button.setBounds(buttons.removeFromLeft(button_w).toNearestIntEdges());
+    create_button.setBounds(buttons.toNearestIntEdges());
+    auto set_box_bounds = [this, &b, &box_h](ComboBox& c) { c.setBounds(b.removeFromBottom(box_h).toNearestIntEdges()); };
+    set_box_bounds(grid0);
     for (auto* const c : grid0_cells)
-        set_bounds(*c);
-    set_bounds(grid1);
+        set_box_bounds(*c);
+    set_box_bounds(grid1);
     for (auto* const c : grid1_cells)
-        set_bounds(*c);
+        set_box_bounds(*c);
 }
 void Mapper::set_state(const ValueTree& state)
 {

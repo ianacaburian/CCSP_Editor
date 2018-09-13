@@ -1,11 +1,12 @@
 #pragma once
+#include "Identifiers.h"
 namespace cc
 {
     // Global constants ===================================================================
     static const char* const chromatic_scale[]{ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
     static const auto octave_for_middle_c = 3, chromatic_scale_size = 12, num_grids = 2, 
                       num_cells = 8, num_boxes = num_grids * num_cells + num_grids,
-                      octal_size = 3;
+                      octal_size = 3, highest_note_no = 127;
 
     // Data structure utilities ===========================================================
     template<typename T>
@@ -60,6 +61,21 @@ namespace cc
     inline bool contains(const A& lower, const B& value, const A& upper)
     {
         return lower <= value && value <= upper;
+    }
+    inline int create_column_get_id(ValueTree& column_list, const String& name)
+    {
+        auto& column_tree = ValueTree{ ID::Column };
+        column_list.appendChild(column_tree, nullptr);
+        column_tree.setProperty(ID::column_name, name, nullptr);
+        const auto column_id = column_list.getNumChildren();
+        column_tree.setProperty(ID::column_id, column_id, nullptr);
+        return column_id;
+    }
+    inline ValueTree create_and_append(const Identifier& id, ValueTree& parent)
+    {
+        auto& new_child = ValueTree{ id };
+        parent.appendChild(new_child, nullptr);
+        return new_child;
     }
     // Tree wrappers ======================================================================
     struct ValueTreePropertyChangeListener : public ValueTree::Listener

@@ -12,12 +12,11 @@ void SampleBrowser::set_state(const ValueTree& state)
 }
 void SampleBrowser::fileClicked(const File& f, const MouseEvent& e) 
 {
-    auto remove_table_tree = [this]()
+    auto remove_table_trees = [this]()
     {
         const ScopedLock sl(lock);
-        const auto table_i = state.indexOf(state.getChildWithName(ID::Sample_Table));
-        if (table_i != -1)
-            state.removeChild(table_i, nullptr);
+        state.removeChild(state.getChildWithName(ID::Sample_Table), nullptr);
+        state.removeChild(state.getChildWithName(ID::Key_Table), nullptr);
     };
     auto analyze_directory = [this](const File& f)->ValueTree
     {
@@ -35,6 +34,7 @@ void SampleBrowser::fileClicked(const File& f, const MouseEvent& e)
         table_tree.appendChild(param_list, nullptr);
         auto& sample_list = ValueTree{ ID::Sample_List };
         table_tree.appendChild(sample_list, nullptr);
+        sample_list.setProperty(ID::samples_folder, f.getFullPathName(), nullptr);
         auto& di = DirectoryIterator{ f, false };
         while (di.next())
         {
@@ -50,9 +50,8 @@ void SampleBrowser::fileClicked(const File& f, const MouseEvent& e)
                 sample_list.appendChild(sample_tree, nullptr);
                 sample_tree.setProperty(ID::file_name, file_name, nullptr);
                 sample_tree.setProperty(ID::file_path, file.getFullPathName(), nullptr);
-                sample_tree.setProperty(ID::note, note_str, nullptr);
-                sample_tree.setProperty(ID::note_no, cc::get_note_no(note_str), nullptr);
-
+                sample_tree.setProperty(ID::root_note, note_str, nullptr);
+                sample_tree.setProperty(ID::root_note_no, cc::get_note_no(note_str), nullptr);
                 auto& params_str = file_name.replaceFirstOccurrenceOf("note=" + note_str, "", true).trim();
                 while (params_str.isNotEmpty())
                 {
@@ -75,11 +74,7 @@ void SampleBrowser::fileClicked(const File& f, const MouseEvent& e)
                         param_tree.setProperty(ID::param_name, param_name_str, nullptr);
                         param_tree.setProperty(ID::param_no, param_list.getNumChildren(), nullptr);
                         add_new_val_tree(param_tree, param_val_str);
-
-                        auto& column_tree = ValueTree{ ID::Column };
-                        column_list.appendChild(column_tree, nullptr);
-                        column_tree.setProperty(ID::column_name, param_name_str, nullptr);
-                        column_tree.setProperty(ID::column_id, column_list.getNumChildren(), nullptr);
+                        cc::create_column_get_id(column_list, param_name_str);
                     }
                     sample_tree.setProperty(Identifier{ param_name_str }, param_val_str, nullptr);
                     const auto param_val_no = param_tree.getChildWithProperty(ID::param_val_name, param_val_str)[ID::param_val_no];
@@ -97,7 +92,7 @@ void SampleBrowser::fileClicked(const File& f, const MouseEvent& e)
     };
     if (f.isDirectory())
     {
-        remove_table_tree();
+        remove_table_trees();
         add_new_table_tree(analyze_directory(f));
         DBG(state.getChildWithName(ID::Sample_Table).getChildWithName(ID::Param_List).toXmlString());
     }

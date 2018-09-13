@@ -131,7 +131,6 @@ public:
                 columnXml->getIntAttribute("column_id"), 30);
         table.autoSizeAllColumns();
         table.getHeader().setSortColumnId(1, true);
-        table.getHeader().setColumnVisible(8, false);
         table.setMultipleSelectionEnabled(true);
     }
     int getSelection(const int rowNumber) const

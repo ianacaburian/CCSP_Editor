@@ -48,13 +48,18 @@ namespace ID
                     //DECLARE_ID(param_val_no)
 
         DECLARE_ID(Sample_List)
+            DECLARE_ID(samples_folder)
+            DECLARE_ID(num_duplicates)
 
             DECLARE_ID(Sample)
                 DECLARE_ID(file_name)
                 DECLARE_ID(file_path)
-                DECLARE_ID(note)
-                DECLARE_ID(note_no)
-                DECLARE_ID(key_no) // property is set later during key gen
+                DECLARE_ID(root_note)
+                DECLARE_ID(root_note_no)
+                DECLARE_ID(key_no) 
+                DECLARE_ID(duplicate_of) // only set if it is a duplicate
+                DECLARE_ID(low_note_no) // only set if not a duplicate
+                DECLARE_ID(note_range)// only set if not a duplicate
 
     DECLARE_ID(Fixed_Param_Vals) // has properties made up of <param_name>_val_no="<param_val_no>"
 
@@ -70,21 +75,9 @@ namespace ID
 
             DECLARE_ID(Key)
                 //DECLARE_ID(key_no)
-                DECLARE_ID(num_files)
+                DECLARE_ID(num_shared)
                 DECLARE_ID(notes)
-                DECLARE_ID(duplicates_exist)
 
-        DECLARE_ID(Key_Tree)
-            
-            //DECLARE_ID(Key)
-                //DECLARE_ID(key_no)
-
-                //DECLARE_ID(Sample)
-                //    DECLARE_ID(file_name)
-                //    DECLARE_ID(file_path)
-                //    DECLARE_ID(note)
-                //    DECLARE_ID(note_no)
-                //    DECLARE_ID(key_no)
 
 
 
