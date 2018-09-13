@@ -3,13 +3,8 @@ SampleBrowser::SampleBrowser(const File& init_dir)
     : FileBrowserComponent(FileChooserFlags::canSelectMultipleItems
                          | FileChooserFlags::canSelectDirectories
                          | FileChooserFlags::canSelectFiles
-                         | FileChooserFlags::openMode, init_dir, nullptr, nullptr)
-{
-}
-void SampleBrowser::set_state(const ValueTree& state)
-{
-    this->state = state;
-}
+                         | FileChooserFlags::openMode, init_dir, nullptr, nullptr) {}
+void SampleBrowser::set_state(const ValueTree& state) { this->state = state; }
 void SampleBrowser::fileClicked(const File& f, const MouseEvent& e) 
 {
     auto analyze_directory = [this](const File& f)->ValueTree
@@ -27,7 +22,6 @@ void SampleBrowser::fileClicked(const File& f, const MouseEvent& e)
             sample_tree.setProperty(ID::root_note, note_str, nullptr);
             sample_tree.setProperty(ID::root_note_no, cc::get_note_no(note_str), nullptr);
         };
-
         auto analyze_params_str = [this, &add_new_val_tree]
         (String& params_str, ValueTree& param_list, ValueTree& column_list, ValueTree& sample_tree)
         {

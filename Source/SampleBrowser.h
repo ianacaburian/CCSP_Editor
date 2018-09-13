@@ -6,11 +6,9 @@ class SampleBrowser : public FileBrowserComponent
 {
 public:
     SampleBrowser(const File& init_dir);
-    void fileClicked(const File& f, const MouseEvent& e) override;
     void set_state(const ValueTree& state);
-    //void analyze_directory(const File& f);
 private:
-
+    void fileClicked(const File& f, const MouseEvent& e) override;
     ValueTree state;
     CriticalSection lock;
 };
